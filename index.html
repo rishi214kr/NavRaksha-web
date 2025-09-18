@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NavRaksha - Your Digital Safety Companion</title>
+    <meta name="description" content="NavRaksha - Advanced safety tracking and emergency response system">
+    <meta name="theme-color" content="#dc2626">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%23dc2626'/><text x='50' y='60' text-anchor='middle' fill='white' font-size='40' font-family='Arial'>🛡️</text></svg>">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- QR Code Generator -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <span class="shield-icon">🛡️</span>
+                <h1>NavRaksha</h1>
+            </div>
+            <div class="status-indicators">
+                <div class="status-item" id="gps-status">
+                    <span class="status-dot offline"></span>
+                    <span>GPS</span>
+                </div>
+                <div class="status-item" id="network-status">
+                    <span class="status-dot offline"></span>
+                    <span>Network</span>
+                </div>
+                <button class="accessibility-toggle" id="contrast-toggle" aria-label="Toggle high contrast">
+                    🌓
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Registration Section -->
+        <section class="section" id="registration-section">
+            <div class="container">
+                <h2>Tourist Registration & Digital ID</h2>
+                <form class="registration-form" id="registration-form">
+                    <div class="form-group">
+                        <label for="name">Full Name *</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="email">Email *</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Phone *</label>
+                            <input type="tel" id="phone" name="phone" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="emergency-contact">Emergency Contact</label>
+                        <input type="tel" id="emergency-contact" name="emergencyContact" placeholder="Emergency contact number">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="blood-group">Blood Group</label>
+                            <select id="blood-group" name="bloodGroup">
+                                <option value="">Select Blood Group</option>
+                                <option value="A+">A+</option>
+                                <option value="A-">A-</option>
+                                <option value="B+">B+</option>
+                                <option value="B-">B-</option>
+                                <option value="AB+">AB+</option>
+                                <option value="AB-">AB-</option>
+                                <option value="O+">O+</option>
+                                <option value="O-">O-</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="allergies">Allergies</label>
+                            <input type="text" id="allergies" name="allergies" placeholder="Any known allergies">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Generate Digital ID</button>
+                </form>
+                
+                <!-- Digital ID Display -->
+                <div class="digital-id" id="digital-id" style="display: none;">
+                    <h3>Your NavRaksha Digital ID</h3>
+                    <div class="id-content">
+                        <div class="qr-code" id="qr-code"></div>
+                        <div class="id-details">
+                            <p><strong>ID:</strong> <span id="user-id"></span></p>
+                            <p><strong>Name:</strong> <span id="user-name"></span></p>
+                            <p><strong>Generated:</strong> <span id="generation-time"></span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard Section -->
+        <section class="section" id="dashboard-section">
+            <div class="container">
+                <h2>Safety Dashboard</h2>
+                <div class="dashboard-grid">
+                    <div class="widget">
+                        <h3>Location Status</h3>
+                        <div class="widget-content">
+                            <p id="location-info">Acquiring location...</p>
+                            <p><strong>Safe Zone:</strong> <span id="safe-zone-status">Not set</span></p>
+                        </div>
+                    </div>
+                    
+                    <div class="widget">
+                        <h3>System Status</h3>
+                        <div class="widget-content">
+                            <p><strong>Queued Events:</strong> <span id="queued-events">0</span></p>
+                            <p><strong>Last Alert:</strong> <span id="last-alert">Never</span></p>
+                            <p><strong>Motion Detection:</strong> <span id="motion-status">Active</span></p>
+                        </div>
+                    </div>
+                    
+                    <div class="widget chart-widget">
+                        <h3>Safety Incidents (Sample Data)</h3>
+                        <canvas id="incidents-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Map Section -->
+        <section class="section" id="map-section">
+            <div class="container">
+                <h2>Live GPS Tracking</h2>
+                <div class="map-controls">
+                    <button class="btn btn-secondary" id="set-safe-zone">Set Safe Zone</button>
+                    <button class="btn btn-secondary" id="clear-safe-zone">Clear Safe Zone</button>
+                    <span class="safe-zone-radius">
+                        Radius: <input type="range" id="radius-slider" min="50" max="1000" value="200" step="50">
+                        <span id="radius-value">200m</span>
+                    </span>
+                </div>
+                <div id="map" class="map-container"></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Floating Action Buttons -->
+    <div class="fab-container">
+        <button class="fab fab-sos" id="sos-button" aria-label="Emergency SOS">
+            <span class="fab-icon">🆘</span>
+            <span class="fab-text">SOS</span>
+        </button>
+        
+        <button class="fab fab-voice" id="voice-button" aria-label="Voice SOS Activation">
+            <span class="fab-icon" id="voice-icon">🎤</span>
+            <span class="fab-text">Voice</span>
+        </button>
+    </div>
+
+    <!-- Modals -->
+    <!-- Safety Check Modal -->
+    <div class="modal" id="safety-modal">
+        <div class="modal-content">
+            <h3>Safety Check</h3>
+            <p>We detected unusual motion. Are you safe?</p>
+            <div class="modal-actions">
+                <button class="btn btn-primary" id="safe-yes">I'm Safe</button>
+                <button class="btn btn-danger" id="safe-no">Send Help</button>
+            </div>
+            <div class="countdown">Auto SOS in: <span id="countdown">10</span>s</div>
+        </div>
+    </div>
+
+    <!-- SOS Confirmation Modal -->
+    <div class="modal" id="sos-modal">
+        <div class="modal-content">
+            <h3>SOS Alert Sent</h3>
+            <p>Emergency services have been notified of your location.</p>
+            <p><strong>Location:</strong> <span id="sos-location">Getting location...</span></p>
+            <p><strong>Time:</strong> <span id="sos-time"></span></p>
+            <button class="btn btn-primary" id="sos-ok">OK</button>
+        </div>
+    </div>
+
+
+    
+
+    <!-- Geofence Alert -->
+    <div class="alert" id="geofence-alert">
+        <div class="alert-content">
+            <span class="alert-icon">⚠️</span>
+            <span class="alert-text">You have left your safe zone!</span>
+            <button class="alert-close" id="alert-close">×</button>
+        </div>
+    </div>
+
+    <!-- Audio for alerts -->
+    <audio id="alert-sound" preload="auto">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT" type="audio/wav">
+    </audio>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
